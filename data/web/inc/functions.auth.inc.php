@@ -502,9 +502,20 @@ function ldap_mbox_login($user, $pass, $iam_settings, $extra = null){
 
     $user_res = $ldap_query->firstOrFail();
   } catch (Exception $e) {
+    clear_session();
     return false;
   }
-  if (!$iam_provider->auth()->attempt($user_res['distinguishedname'][0], $pass)) {
+  try {
+    if (!$iam_provider->auth()->attempt($user_res['distinguishedname'][0], $pass)) {
+      return false;
+    }
+  } catch (Exception $e) {
+    clear_session();
+    $_SESSION['return'][] =  array(
+      'type' => 'danger',
+      'log' => array(__FUNCTION__, $user, '*'),
+      'msg' => json_encode($user_res)
+    );
     return false;
   }
 
